@@ -1,9 +1,11 @@
 use std::fmt;
+use std::num::FromPrimitive;
 
 // Assembler: http://alex.nisnevich.com/dcpu16-assembler/
 // CPU Spec: https://raw.githubusercontent.com/gatesphere/demi-16/master/docs/dcpu-specs/dcpu-1-7.txt
 
 #[allow(dead_code)] // REMOVE ME!
+#[deriving(PartialEq, FromPrimitive, Show)]
 enum Op {
     Special,
     SET,
@@ -29,6 +31,7 @@ enum Op {
     IFA,
     IFL,
     IFU,
+    NOOP,
     ADX = 0x1a,
     SBC = 0x1b,
     STI = 0x1e,
@@ -86,8 +89,48 @@ impl fmt::Show for CpuState {
     }
 }
 
+#[allow(dead_code)] // REMOVE ME!
+struct Instruction {
+    op: Op,
+    a: u16,
+    b: u16
+}
+
+impl fmt::Show for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} ({:04x}, {:04x})", self.op, self.a, self.b)
+    }
+}
+
+/*
+Instructions are 1-3 words long and are fully defined by the first word.
+In a basic instruction, the lower five bits of the first word of the instruction
+are the opcode, and the remaining eleven bits are split into a five bit value b
+and a six bit value a.
+b is always handled by the processor after a, and is the lower five bits.
+In bits (in LSB-0 format), a basic instruction has the format: aaaaaabbbbbooooo
+*/
+fn read_instruction(instr: u16) -> Instruction {
+    let hop = instr & 0b11111;
+    let b = (instr >> 5) & 0b11111;
+    let a = instr >> 10;
+
+    //println!("{:04x} ( {:04x}, {:04x} )", hop, a, b);
+    let op: Option<Op> = FromPrimitive::from_u16(hop);
+
+    // This is a bit ugly. Any other ways of handling failed enum cast?
+    match op {
+        Some(op) => Instruction { op: op, a: a, b: b },
+        None => Instruction { op: NOOP, a: 0, b: 0 }
+    }
+}
+
 fn main() {
     let c = CpuState::new();
     println!("{}", c);
+    let i = read_instruction(0x7c01u16);
+    println!("{}", i);
 
+    let j = read_instruction(0x7803u16);
+    println!("{}", j);
 }
