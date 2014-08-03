@@ -110,27 +110,24 @@ and a six bit value a.
 b is always handled by the processor after a, and is the lower five bits.
 In bits (in LSB-0 format), a basic instruction has the format: aaaaaabbbbbooooo
 */
-fn read_instruction(instr: u16) -> Instruction {
+fn parse_instruction(instr: u16) -> Instruction {
     let hop = instr & 0b11111;
     let b = (instr >> 5) & 0b11111;
     let a = instr >> 10;
-
-    //println!("{:04x} ( {:04x}, {:04x} )", hop, a, b);
     let op: Option<Op> = FromPrimitive::from_u16(hop);
 
-    // This is a bit ugly. Any other ways of handling failed enum cast?
     match op {
         Some(op) => Instruction { op: op, a: a, b: b },
-        None => Instruction { op: NOOP, a: 0, b: 0 }
+        None => fail!("Invalid instruction")
     }
 }
 
 fn main() {
     let c = CpuState::new();
     println!("{}", c);
-    let i = read_instruction(0x7c01u16);
+    let i = parse_instruction(0x7c01u16);
     println!("{}", i);
 
-    let j = read_instruction(0x7803u16);
+    let j = parse_instruction(0x7803u16);
     println!("{}", j);
 }
