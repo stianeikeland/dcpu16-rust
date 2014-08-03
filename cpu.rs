@@ -52,6 +52,21 @@ enum SpecialOp {
 }
 
 #[allow(dead_code)] // REMOVE ME!
+enum Value {
+    RegVal,            // Value in register x
+    RegPointer,        // Value in mem[register x]
+    SPushPop,          // Push if b, Pop if a
+    SPeek,             // [SP]
+    SPick,             // [SP + next]
+    SP,
+    PC,
+    EX,
+    NextPointer,       // mem[next word]
+    NextVal,           // next word (literal)
+    Val                // literal value (0xffff-0x1e) (only for a)
+}
+
+#[allow(dead_code)] // REMOVE ME!
 struct CpuState {
     reg: [u16, .. 8],
     pc: u16,
@@ -70,7 +85,26 @@ impl CpuState {
             sp: n,
             ex: n,
             ia: n,
-            mem: Vec::from_elem(0x10000, 0u16)
+            mem: Vec::from_elem(0x10000, 0u16) // Look for immutable vec in stdlib..
+        }
+    }
+
+    fn get_next_instruction(&self) -> Instruction {
+        parse_instruction(*self.mem.get(self.pc as uint))
+    }
+
+    fn step(&self) -> CpuState {
+        let instr = self.get_next_instruction();
+
+        println!("Step: {}", instr);
+
+        CpuState {
+            reg: self.reg,
+            pc: self.pc + 1,
+            sp: self.sp,
+            ex: self.ex,
+            ia: self.ia,
+            mem: self.mem.clone()
         }
     }
 }
@@ -130,4 +164,6 @@ fn main() {
 
     let j = parse_instruction(0x7803u16);
     println!("{}", j);
+
+    c.step();
 }
