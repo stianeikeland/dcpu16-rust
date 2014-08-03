@@ -1,3 +1,8 @@
+use std::fmt;
+
+// Assembler: http://alex.nisnevich.com/dcpu16-assembler/
+// CPU Spec: https://raw.githubusercontent.com/gatesphere/demi-16/master/docs/dcpu-specs/dcpu-1-7.txt
+
 #[allow(dead_code)] // REMOVE ME!
 enum Op {
     Special,
@@ -53,33 +58,36 @@ struct CpuState {
     mem: Vec<u16>
 }
 
-fn new_cpu() -> CpuState {
-    let n = 0u16;
-    CpuState {
-        reg: [n, n, n, n, n, n, n, n],
-        pc: n,
-        sp: n,
-        ex: n,
-        ia: n,
-        mem: Vec::from_elem(0x10000, 0u16)
+impl CpuState {
+    fn new() -> CpuState {
+        let n = 0u16;
+        CpuState {
+            reg: [n, n, n, n, n, n, n, n],
+            pc: n,
+            sp: n,
+            ex: n,
+            ia: n,
+            mem: Vec::from_elem(0x10000, 0u16)
+        }
     }
 }
 
-#[allow(dead_code)] // REMOVE ME!
-fn print_state(cpu: CpuState) {
-    println!("CPU State:\n-----------------------");
-    print!("Reg: [");
-    for r in cpu.reg.iter() {
-        print!(" 0x{:04x}", *r);
+impl fmt::Show for CpuState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,
+               "--------------------------\n\
+                [ A: 0x{:04x}, B: 0x{:04x}, C: 0x{:04x}, X: 0x{:04x}, \
+                Y: 0x{:04x}, Z: 0x{:04x}, I: 0x{:04x}, J: 0x{:04x} ]\n \
+                PC: 0x{:04x}\n SP: 0x{:04x}\n EX: 0x{:04x}\n IA: 0x{:04x}\n\
+                --------------------------",
+               self.reg[0], self.reg[1], self.reg[2], self.reg[3],
+               self.reg[4], self.reg[5], self.reg[6], self.reg[7],
+               self.pc, self.sp, self.ex, self.ia)
     }
-    println!(" ]");
-
-    println!("PC: 0x{:04x}\nSP: 0x{:04x}\nEX: 0x{:04x}\nIA: 0x{:04x}",
-             cpu.pc, cpu.sp, cpu.ex, cpu.ia);
-    println!("-----------------------");
 }
 
 fn main() {
-    let c = new_cpu();
-    print_state(c);
+    let c = CpuState::new();
+    println!("{}", c);
+
 }
