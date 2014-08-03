@@ -93,19 +93,11 @@ impl CpuState {
         parse_instruction(*self.mem.get(self.pc as uint))
     }
 
-    fn step(&self) -> CpuState {
+    fn step(self) -> CpuState {
         let instr = self.get_next_instruction();
-
         println!("Step: {}", instr);
 
-        CpuState {
-            reg: self.reg,
-            pc: self.pc + 1,
-            sp: self.sp,
-            ex: self.ex,
-            ia: self.ia,
-            mem: self.mem.clone()
-        }
+        CpuState { pc: self.pc + 1, .. self }
     }
 }
 
