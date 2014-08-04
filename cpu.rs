@@ -5,7 +5,6 @@ use std::io::File;
 // Assembler: http://alex.nisnevich.com/dcpu16-assembler/
 // CPU Spec: https://raw.githubusercontent.com/gatesphere/demi-16/master/docs/dcpu-specs/dcpu-1-7.txt
 
-#[allow(dead_code)] // REMOVE ME!
 #[deriving(PartialEq, FromPrimitive, Show)]
 enum Op {
     Special,
@@ -39,7 +38,7 @@ enum Op {
     STD = 0x1f
 }
 
-#[allow(dead_code)] // REMOVE ME!
+#[deriving(PartialEq, FromPrimitive, Show)]
 enum SpecialOp {
     JSR = 0x1,
     INT = 0x8,
@@ -52,10 +51,11 @@ enum SpecialOp {
     HWI = 0x12
 }
 
-#[allow(dead_code)] // REMOVE ME!
-enum Value {
+#[deriving(PartialEq, FromPrimitive, Show)]
+enum ValueType {
     RegVal,            // Value in register x
     RegPointer,        // Value in mem[register x]
+    RegNextPointer,    // mem[register + next word].. ?
     SPushPop,          // Push if b, Pop if a
     SPeek,             // [SP]
     SPick,             // [SP + next]
@@ -65,6 +65,26 @@ enum Value {
     NextPointer,       // mem[next word]
     NextVal,           // next word (literal)
     Val                // literal value (0xffff-0x1e) (only for a)
+}
+
+impl ValueType {
+    fn new(v: u16) -> ValueType {
+        match v {
+            0x0 .. 0x7 => RegVal,
+            0x8 .. 0xf => RegPointer,
+            0x10 .. 0x17 => RegNextPointer,
+            0x18 => SPushPop,
+            0x19 => SPeek,
+            0x1a => SPick,
+            0x1b => SP,
+            0x1c => PC,
+            0x1d => EX,
+            0x1e => NextPointer,
+            0x1f => NextVal,
+            0x20 .. 0x3f => Val,
+            _ => fail!("source not implemented")
+        }
+    }
 }
 
 #[allow(dead_code)] // REMOVE ME!
@@ -89,10 +109,29 @@ impl CpuState {
         }
     }
 
-    fn get_next_instruction(&self) -> Instruction {
-        parse_instruction(*self.mem.get(self.pc as uint))
+    fn instruction_fetch(&self) -> Instruction {
+        Instruction::new(*self.mem.get(self.pc as uint))
     }
 
+    // FIXME Move me..
+    fn get_value_a(&self, i: Instruction) -> u16 {
+        match i.a {
+            RegVal => self.reg[i.a_raw as uint],
+            NextVal => *self.mem.get(self.sp as uint + 1),
+            _ => fail!("source not implemented")
+        }
+    }
+
+    fn set_value(self, i: Instruction, val: u16) -> CpuState {
+        match i.b {
+            RegVal => {
+                let mut newreg = self.reg;
+                newreg[i.b_raw as uint] = val;
+                CpuState { reg: newreg, .. self }
+            }
+            _ => fail!("target not implemented")
+        }
+    }
 
     fn set_program(self, p: &Vec<u16>) -> CpuState {
         let mut m = p.clone();
@@ -101,10 +140,24 @@ impl CpuState {
     }
 
     fn step(self) -> CpuState {
-        let instr = self.get_next_instruction();
-        println!("Step: {}", instr);
+        let instr = self.instruction_fetch();
+        println!("Executing: {}", instr);
 
-        CpuState { pc: self.pc + 1, .. self }
+        let cpu = match instr.op {
+            SET => {
+                let val = self.get_value_a(instr);
+                self.set_value(instr, val)
+            },
+            _ => fail!("op not implemented")
+        };
+
+        // Increment PC, twice if a is a [pc++] next word:
+        let pc = match instr.a {
+            NextVal => cpu.pc + 2,
+            _ => cpu.pc + 1
+        };
+
+        CpuState { pc: pc, .. cpu }
     }
 }
 
@@ -125,14 +178,10 @@ impl fmt::Show for CpuState {
 #[allow(dead_code)] // REMOVE ME!
 struct Instruction {
     op: Op,
-    a: u16,
-    b: u16
-}
-
-impl fmt::Show for Instruction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} ({:04x}, {:04x})", self.op, self.a, self.b)
-    }
+    a_raw: u16,
+    a: ValueType,
+    b_raw: u16,
+    b: ValueType
 }
 
 /*
@@ -143,15 +192,28 @@ and a six bit value a.
 b is always handled by the processor after a, and is the lower five bits.
 In bits (in LSB-0 format), a basic instruction has the format: aaaaaabbbbbooooo
 */
-fn parse_instruction(instr: u16) -> Instruction {
-    let hop = instr & 0b11111;
-    let b = (instr >> 5) & 0b11111;
-    let a = instr >> 10;
-    let op: Option<Op> = FromPrimitive::from_u16(hop);
+impl Instruction {
+    fn new(i: u16) -> Instruction {
+        let hop = i & 0b11111;
+        let b_raw = (i >> 5) & 0b11111;
+        let a_raw = i >> 10;
 
-    match op {
-        Some(op) => Instruction { op: op, a: a, b: b },
-        None => fail!("Invalid instruction")
+        let op: Option<Op> = FromPrimitive::from_u16(hop);
+
+        let a = ValueType::new(a_raw);
+        let b = ValueType::new(b_raw);
+
+        match op {
+            Some(op) => Instruction { op: op, a: a, b: b, b_raw: b_raw, a_raw: a_raw },
+            None => fail!("Invalid instruction")
+        }
+    }
+}
+
+impl fmt::Show for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} ({} - {:04x}, {} {:04x})",
+               self.op, self.a, self.a_raw, self.b, self.b_raw)
     }
 }
 
@@ -175,11 +237,9 @@ fn load_program(file: Path) -> Vec<u16> {
 fn main() {
     let c = CpuState::new();
     println!("{}", c);
-    let i = parse_instruction(0x7c01u16);
-    println!("{}", i);
 
-    let j = parse_instruction(0x7803u16);
-    println!("{}", j);
+    let prog = load_program(Path::new("brille.fil"));
+    let k = c.set_program(&prog);
 
-    c.step();
+    println!("{}", k.step());
 }
