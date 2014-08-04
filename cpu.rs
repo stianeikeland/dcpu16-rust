@@ -53,7 +53,7 @@ enum SpecialOp {
 
 #[deriving(PartialEq, FromPrimitive, Show)]
 enum ValueType {
-    RegVal,            // Value in register x
+    Reg,            // Value in register x
     RegPointer,        // Value in mem[register x]
     RegNextPointer,    // mem[register + next word].. ?
     SPushPop,          // Push if b, Pop if a
@@ -70,7 +70,7 @@ enum ValueType {
 impl ValueType {
     fn new(v: u16) -> ValueType {
         match v {
-            0x0 .. 0x7 => RegVal,
+            0x0 .. 0x7 => Reg,
             0x8 .. 0xf => RegPointer,
             0x10 .. 0x17 => RegNextPointer,
             0x18 => SPushPop,
@@ -116,7 +116,7 @@ impl CpuState {
     // FIXME Move me..
     fn get_value_a(&self, i: Instruction) -> u16 {
         match i.a {
-            RegVal => self.reg[i.a_raw as uint],
+            Reg => self.reg[i.a_raw as uint],
             NextVal => *self.mem.get(self.sp as uint + 1),
             _ => fail!("source not implemented")
         }
@@ -124,7 +124,7 @@ impl CpuState {
 
     fn set_value(self, i: Instruction, val: u16) -> CpuState {
         match i.b {
-            RegVal => {
+            Reg => {
                 let mut newreg = self.reg;
                 newreg[i.b_raw as uint] = val;
                 CpuState { reg: newreg, .. self }
@@ -213,7 +213,7 @@ impl Instruction {
 impl fmt::Show for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} ({} - {:04x}, {} {:04x})",
-               self.op, self.a, self.a_raw, self.b, self.b_raw)
+               self.op, self.b, self.b_raw, self.a, self.a_raw)
     }
 }
 
