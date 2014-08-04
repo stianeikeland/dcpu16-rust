@@ -79,13 +79,12 @@ struct CpuState {
 
 impl CpuState {
     fn new() -> CpuState {
-        let n = 0u16;
         CpuState {
-            reg: [n, n, n, n, n, n, n, n],
-            pc: n,
-            sp: n,
-            ex: n,
-            ia: n,
+            reg: [0,0,0,0,0,0,0,0],
+            pc: 0,
+            sp: 0,
+            ex: 0,
+            ia: 0,
             mem: Vec::from_elem(0x10000, 0u16) // Look for immutable vec in stdlib..
         }
     }
