@@ -93,6 +93,13 @@ impl CpuState {
         parse_instruction(*self.mem.get(self.pc as uint))
     }
 
+
+    fn set_program(self, p: &Vec<u16>) -> CpuState {
+        let mut m = p.clone();
+        m.grow(0x10000 - p.len(), &(0u16));
+        CpuState { mem: m,  .. self }
+    }
+
     fn step(self) -> CpuState {
         let instr = self.get_next_instruction();
         println!("Step: {}", instr);
