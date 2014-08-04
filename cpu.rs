@@ -88,17 +88,17 @@ impl ValueType {
 }
 
 #[allow(dead_code)] // REMOVE ME!
-struct CpuState {
-    reg: [u16, .. 8],
-    pc: u16,
-    sp: u16,
-    ex: u16,
-    ia: u16,
-    mem: Vec<u16>
+pub struct CpuState {
+    pub reg: [u16, .. 8],
+    pub pc: u16,
+    pub sp: u16,
+    pub ex: u16,
+    pub ia: u16,
+    pub mem: Vec<u16>
 }
 
 impl CpuState {
-    fn new() -> CpuState {
+    pub fn new() -> CpuState {
         CpuState {
             reg: [0,0,0,0,0,0,0,0],
             pc: 0,
@@ -117,7 +117,15 @@ impl CpuState {
     fn get_value_a(&self, i: Instruction) -> u16 {
         match i.a {
             Reg => self.reg[i.a_raw as uint],
-            NextVal => *self.mem.get(self.sp as uint + 1),
+            NextVal => *self.mem.get(self.pc as uint + 1),
+            _ => fail!("source not implemented")
+        }
+    }
+
+    // FIXME: How to handle next word for b? is it needed?
+    fn get_value_b(&self, i: Instruction) -> u16 {
+        match i.b {
+            Reg => self.reg[i.b_raw as uint],
             _ => fail!("source not implemented")
         }
     }
@@ -133,20 +141,25 @@ impl CpuState {
         }
     }
 
-    fn set_program(self, p: &Vec<u16>) -> CpuState {
+    pub fn set_program(self, p: &Vec<u16>) -> CpuState {
         let mut m = p.clone();
         m.grow(0x10000 - p.len(), &(0u16));
         CpuState { mem: m,  .. self }
     }
 
-    fn step(self) -> CpuState {
+    pub fn step(self) -> CpuState {
         let instr = self.instruction_fetch();
         println!("Executing: {}", instr);
 
+        let val = self.get_value_a(instr);
+        println!("val: {:04x}", val);
+
         let cpu = match instr.op {
-            SET => {
-                let val = self.get_value_a(instr);
-                self.set_value(instr, val)
+            SET => self.set_value(instr, val),
+            ADD => {
+                let old = self.get_value_b(instr);
+                println!("old: {:04x}", old);
+                self.set_value(instr, old + val)
             },
             _ => fail!("op not implemented")
         };
@@ -218,7 +231,8 @@ impl fmt::Show for Instruction {
 }
 
 // FIXME: Make this less imperative!
-fn load_program(file: Path) -> Vec<u16> {
+#[allow(dead_code)]
+pub fn load_program(file: Path) -> Vec<u16> {
     let mut fh = File::open(&file).unwrap();
     let mut eof = false;
     let mut data: Vec<u16> = Vec::new();
@@ -234,6 +248,7 @@ fn load_program(file: Path) -> Vec<u16> {
     data
 }
 
+/*
 fn main() {
     let c = CpuState::new();
     println!("{}", c);
@@ -242,4 +257,4 @@ fn main() {
     let k = c.set_program(&prog);
 
     println!("{}", k.step());
-}
+} */
