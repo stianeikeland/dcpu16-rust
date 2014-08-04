@@ -157,10 +157,15 @@ impl CpuState {
         let cpu = match instr.op {
             SET => self.set_value(instr, val),
             ADD => {
+                // FIXME: Handle overflow
                 let old = self.get_value_b(instr);
-                println!("old: {:04x}", old);
                 self.set_value(instr, old + val)
             },
+            SUB => {
+                // FIXME: Handle underflow
+                let old = self.get_value_b(instr);
+                self.set_value(instr, old - val)
+            }
             _ => fail!("op not implemented")
         };
 
