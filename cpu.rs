@@ -165,6 +165,11 @@ impl CpuState {
                 // FIXME: Handle underflow
                 let old = self.get_value_b(instr);
                 self.set_value(instr, old - val)
+            },
+            MUL => {
+                // FIXME: Handle overflow
+                let old = self.get_value_b(instr);
+                self.set_value(instr, old * val)
             }
             _ => fail!("op not implemented")
         };
