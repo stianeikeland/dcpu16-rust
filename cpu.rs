@@ -1,5 +1,6 @@
 use std::fmt;
 use std::num::FromPrimitive;
+use std::io::File;
 
 // Assembler: http://alex.nisnevich.com/dcpu16-assembler/
 // CPU Spec: https://raw.githubusercontent.com/gatesphere/demi-16/master/docs/dcpu-specs/dcpu-1-7.txt
@@ -146,6 +147,23 @@ fn parse_instruction(instr: u16) -> Instruction {
         Some(op) => Instruction { op: op, a: a, b: b },
         None => fail!("Invalid instruction")
     }
+}
+
+// FIXME: Make this less imperative!
+fn load_program(file: Path) -> Vec<u16> {
+    let mut fh = File::open(&file).unwrap();
+    let mut eof = false;
+    let mut data: Vec<u16> = Vec::new();
+
+    while !eof {
+        let b = fh.read_le_u16();
+        match b {
+            Ok(o) => data.push(o),
+            _ => eof = true
+        }
+    };
+
+    data
 }
 
 fn main() {
