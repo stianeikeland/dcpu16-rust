@@ -152,24 +152,26 @@ impl CpuState {
         println!("Executing: {}", instr);
 
         let val = self.get_value_a(instr);
-        println!("val: {:04x}", val);
+        let old = self.get_value_b(instr);
+        println!("val: {:04x}, old: {:04x}", val, old);
 
         let cpu = match instr.op {
             SET => self.set_value(instr, val),
             ADD => {
                 // FIXME: Handle overflow
-                let old = self.get_value_b(instr);
                 self.set_value(instr, old + val)
             },
             SUB => {
                 // FIXME: Handle underflow
-                let old = self.get_value_b(instr);
                 self.set_value(instr, old - val)
             },
             MUL => {
                 // FIXME: Handle overflow
-                let old = self.get_value_b(instr);
                 self.set_value(instr, old * val)
+            },
+            DIV => {
+                // FIXME: handle div by 0
+                self.set_value(instr, old / val)
             }
             _ => fail!("op not implemented")
         };

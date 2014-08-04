@@ -50,3 +50,18 @@ fn mul_next_word() {
     assert!(c.pc == 4);
     assert!(c.reg[0] == 0x600);
 }
+
+//TODO: add signed mul
+
+#[test]
+fn div_next_word() {
+    // SET A, 0x30
+    // DIV A, 0x2
+    let p: Vec<u16> = vec!(0x7c01, 0x30, 0x7c06, 0x2);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    print!("{}", c);
+
+    assert!(c.pc == 4);
+    assert!(c.reg[0] == 0x18);
+}
