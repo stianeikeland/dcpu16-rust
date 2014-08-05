@@ -147,6 +147,10 @@ impl CpuState {
         CpuState { mem: m,  .. self }
     }
 
+    fn inc_pc(self) -> CpuState {
+        CpuState { pc: self.pc + 1, .. self }
+    }
+
     pub fn step(self) -> CpuState {
         let instr = self.instruction_fetch();
         println!("Executing: {}", instr);
@@ -170,16 +174,20 @@ impl CpuState {
             XOR => self.set(instr, old ^ val),
             SHR => self.set(instr, old >> val as uint), // FIXME: set EX
             ASR => self.set(instr, old << val as uint), // FIXME: set EX
+            IFB => if old & val != 0 { self } else { self.inc_pc() },
+            IFC => if old & val == 0 { self } else { self.inc_pc() },
+            IFE => if old == val { self } else { self.inc_pc() },
+            IFN => if old != val { self } else { self.inc_pc() },
+            IFG => if old > val { self } else { self.inc_pc() },
+            IFL => if old < val { self } else { self.inc_pc() },
             _ => fail!("op not implemented")
         };
 
         // Increment PC, twice if a is a [pc++] next word:
-        let pc = match instr.a {
-            NextVal => cpu.pc + 2,
-            _ => cpu.pc + 1
-        };
-
-        CpuState { pc: pc, .. cpu }
+        match instr.a {
+            NextVal => cpu.inc_pc().inc_pc(),
+            _ => cpu.inc_pc()
+        }
     }
 }
 

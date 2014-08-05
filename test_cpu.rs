@@ -185,3 +185,90 @@ fn asr_next_word() {
     assert!(c.pc == 4);
     assert!(c.reg[0] == 196);
 }
+
+/*
+ 2+| 0x10 | IFB b, a | performs next instruction only if (b&a)!=0
+ 2+| 0x11 | IFC b, a | performs next instruction only if (b&a)==0
+ 2+| 0x12 | IFE b, a | performs next instruction only if b==a
+ 2+| 0x13 | IFN b, a | performs next instruction only if b!=a
+ 2+| 0x14 | IFG b, a | performs next instruction only if b>a
+ 2+| 0x15 | IFA b, a | performs next instruction only if b>a (signed)
+ 2+| 0x16 | IFL b, a | performs next instruction only if b<a
+ 2+| 0x17 | IFU b, a | performs next instruction only if b<a (signed)
+*/
+
+#[test]
+fn ifb_and_false_should_skip_next_instr() {
+    // SET A, 0x1
+    // IFB A, 0x2
+    let p: Vec<u16> = vec!(0x7c01, 0x1, 0x7c10, 0x2);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    println!("{}", c);
+
+    assert!(c.pc == 5);
+}
+
+#[test]
+fn ifc_nand_false_should_skip_next_instr() {
+    // SET A, 0x1
+    // IFC A, 0x1
+    let p: Vec<u16> = vec!(0x7c01, 0x1, 0x7c11, 0x1);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    println!("{}", c);
+
+    assert!(c.pc == 5);
+}
+
+#[test]
+fn ife_not_eql_should_skip_next_instr() {
+    // SET A, 0x1
+    // IFE A, 0x2
+    let p: Vec<u16> = vec!(0x7c01, 0x1, 0x7c12, 0x2);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    println!("{}", c);
+
+    assert!(c.pc == 5);
+}
+
+#[test]
+fn ifn_eql_should_skip_next_instr() {
+    // SET A, 0x1
+    // IFN A, 0x1
+    let p: Vec<u16> = vec!(0x7c01, 0x1, 0x7c13, 0x1);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    println!("{}", c);
+
+    assert!(c.pc == 5);
+}
+
+#[test]
+fn ifg_not_greater_should_skip_next_instr() {
+    // SET A, 0x1
+    // IFG A, 0x2
+    let p: Vec<u16> = vec!(0x7c01, 0x1, 0x7c14, 0x2);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    println!("{}", c);
+
+    assert!(c.pc == 5);
+}
+
+// TODO: IFA
+
+#[test]
+fn ifl_not_greater_should_skip_next_instr() {
+    // SET A, 0x2
+    // IFL A, 0x1
+    let p: Vec<u16> = vec!(0x7c01, 0x2, 0x7c16, 0x1);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    println!("{}", c);
+
+    assert!(c.pc == 5);
+}
+
+// TODO: IFU
