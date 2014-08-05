@@ -172,6 +172,10 @@ impl CpuState {
             DIV => {
                 // FIXME: handle div by 0
                 self.set_value(instr, old / val)
+            },
+            MOD => {
+                let res = if val != 0 { old % val } else { 0 };
+                self.set_value(instr, res)
             }
             _ => fail!("op not implemented")
         };

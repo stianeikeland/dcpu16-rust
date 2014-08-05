@@ -66,8 +66,6 @@ fn add_from_next_word() {
     let p: Vec<u16> = vec!(0x7c01, 0x30, 0x7c02, 0x20);
     let c = CpuState::new().set_program(&p).step().step();
 
-    print!("{}", c);
-
     assert!(c.pc == 4);
     assert!(c.reg[0] == 0x50);
 }
@@ -79,8 +77,6 @@ fn sub_next_word() {
     let p: Vec<u16> = vec!(0x7c01, 0x30, 0x7c03, 0x20);
     let c = CpuState::new().set_program(&p).step().step();
 
-    print!("{}", c);
-
     assert!(c.pc == 4);
     assert!(c.reg[0] == 0x10);
 }
@@ -91,8 +87,6 @@ fn mul_next_word() {
     // MUL A, 0x20
     let p: Vec<u16> = vec!(0x7c01, 0x30, 0x7c04, 0x20);
     let c = CpuState::new().set_program(&p).step().step();
-
-    print!("{}", c);
 
     assert!(c.pc == 4);
     assert!(c.reg[0] == 0x600);
@@ -107,8 +101,30 @@ fn div_next_word() {
     let p: Vec<u16> = vec!(0x7c01, 0x30, 0x7c06, 0x2);
     let c = CpuState::new().set_program(&p).step().step();
 
-    print!("{}", c);
-
     assert!(c.pc == 4);
     assert!(c.reg[0] == 0x18);
+}
+
+//TODO: add signed div
+
+#[test]
+fn mod_next_word() {
+    // SET A, 0x31
+    // MOD A, 0x2
+    let p: Vec<u16> = vec!(0x7c01, 0x31, 0x7c08, 0x2);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    assert!(c.pc == 4);
+    assert!(c.reg[0] == 1);
+}
+
+#[test]
+fn mod_0_should_be_0() {
+    // SET A, 0x31
+    // MOD A, 0
+    let p: Vec<u16> = vec!(0x7c01, 0x31, 0x7c08, 0);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    assert!(c.pc == 4);
+    assert!(c.reg[0] == 0);
 }
