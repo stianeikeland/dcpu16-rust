@@ -130,7 +130,7 @@ impl CpuState {
         }
     }
 
-    fn set_value(self, i: Instruction, val: u16) -> CpuState {
+    fn set(self, i: Instruction, val: u16) -> CpuState {
         match i.b {
             Reg => {
                 let mut newreg = self.reg;
@@ -156,32 +156,20 @@ impl CpuState {
         println!("val: {:04x}, old: {:04x}", val, old);
 
         let cpu = match instr.op {
-            SET => self.set_value(instr, val),
-            ADD => {
-                // FIXME: Handle overflow
-                self.set_value(instr, old + val)
-            },
-            SUB => {
-                // FIXME: Handle underflow
-                self.set_value(instr, old - val)
-            },
-            MUL => {
-                // FIXME: Handle overflow
-                self.set_value(instr, old * val)
-            },
-            DIV => {
-                // FIXME: handle div by 0
-                self.set_value(instr, old / val)
-            },
+            SET => self.set(instr, val),
+            ADD => self.set(instr, old + val), // FIXME: Handle overflow
+            SUB => self.set(instr, old - val), // FIXME: Handle underflow
+            MUL => self.set(instr, old * val), // FIXME: Handle overflow
+            DIV => self.set(instr, old / val), // FIXME: handle div by 0
             MOD => {
                 let res = if val != 0 { old % val } else { 0 };
-                self.set_value(instr, res)
+                self.set(instr, res)
             },
-            AND => self.set_value(instr, old & val),
-            BOR => self.set_value(instr, old | val),
-            XOR => self.set_value(instr, old ^ val),
-            SHR => self.set_value(instr, old >> val as uint), // FIXME: set EX
-            ASR => self.set_value(instr, old << val as uint), // FIXME: set EX
+            AND => self.set(instr, old & val),
+            BOR => self.set(instr, old | val),
+            XOR => self.set(instr, old ^ val),
+            SHR => self.set(instr, old >> val as uint), // FIXME: set EX
+            ASR => self.set(instr, old << val as uint), // FIXME: set EX
             _ => fail!("op not implemented")
         };
 
