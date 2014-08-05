@@ -176,7 +176,10 @@ impl CpuState {
             MOD => {
                 let res = if val != 0 { old % val } else { 0 };
                 self.set_value(instr, res)
-            }
+            },
+            AND => self.set_value(instr, old & val),
+            BOR => self.set_value(instr, old | val),
+            XOR => self.set_value(instr, old ^ val),
             _ => fail!("op not implemented")
         };
 

@@ -128,3 +128,38 @@ fn mod_0_should_be_0() {
     assert!(c.pc == 4);
     assert!(c.reg[0] == 0);
 }
+
+//TODO: add signed mod
+
+#[test]
+fn and_next_word() {
+    // SET A, 0x31
+    // AND A, 0x15
+    let p: Vec<u16> = vec!(0x7c01, 0x31, 0x7c0a, 0x15);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    assert!(c.pc == 4);
+    assert!(c.reg[0] == 17);
+}
+
+#[test]
+fn or_next_word() {
+    // SET A, 0x31
+    // BOR A, 0x15
+    let p: Vec<u16> = vec!(0x7c01, 0x31, 0x7c0b, 0x15);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    assert!(c.pc == 4);
+    assert!(c.reg[0] == 53);
+}
+
+#[test]
+fn xor_next_word() {
+    // SET A, 0x31
+    // XOR A, 0x15
+    let p: Vec<u16> = vec!(0x7c01, 0x31, 0x7c0c, 0x15);
+    let c = CpuState::new().set_program(&p).step().step();
+
+    assert!(c.pc == 4);
+    assert!(c.reg[0] == 36);
+}
