@@ -155,31 +155,31 @@ impl CpuState {
         let instr = self.instruction_fetch();
         println!("Executing: {}", instr);
 
-        let val = self.get_value_a(instr);
-        let old = self.get_value_b(instr);
-        println!("val: {:04x}, old: {:04x}", val, old);
+        let a = self.get_value_a(instr);
+        let b = self.get_value_b(instr);
+        println!("a: {:04x}, b: {:04x}", a, b);
 
         let cpu = match instr.op {
-            SET => self.set(instr, val),
-            ADD => self.set(instr, old + val), // FIXME: Handle overflow
-            SUB => self.set(instr, old - val), // FIXME: Handle underflow
-            MUL => self.set(instr, old * val), // FIXME: Handle overflow
-            DIV => self.set(instr, old / val), // FIXME: handle div by 0
+            SET => self.set(instr, a),
+            ADD => self.set(instr, b + a), // FIXME: Handle overflow
+            SUB => self.set(instr, b - a), // FIXME: Handle underflow
+            MUL => self.set(instr, b * a), // FIXME: Handle overflow
+            DIV => self.set(instr, b / a), // FIXME: handle div by 0
             MOD => {
-                let res = if val != 0 { old % val } else { 0 };
+                let res = if a != 0 { b % a } else { 0 };
                 self.set(instr, res)
             },
-            AND => self.set(instr, old & val),
-            BOR => self.set(instr, old | val),
-            XOR => self.set(instr, old ^ val),
-            SHR => self.set(instr, old >> val as uint), // FIXME: set EX
-            ASR => self.set(instr, old << val as uint), // FIXME: set EX
-            IFB => if old & val != 0 { self } else { self.inc_pc() },
-            IFC => if old & val == 0 { self } else { self.inc_pc() },
-            IFE => if old == val { self } else { self.inc_pc() },
-            IFN => if old != val { self } else { self.inc_pc() },
-            IFG => if old > val { self } else { self.inc_pc() },
-            IFL => if old < val { self } else { self.inc_pc() },
+            AND => self.set(instr, b & a),
+            BOR => self.set(instr, b | a),
+            XOR => self.set(instr, b ^ a),
+            SHR => self.set(instr, b >> a as uint), // FIXME: set EX
+            ASR => self.set(instr, b << a as uint), // FIXME: set EX
+            IFB => if b & a != 0 { self } else { self.inc_pc() },
+            IFC => if b & a == 0 { self } else { self.inc_pc() },
+            IFE => if b == a { self } else { self.inc_pc() },
+            IFN => if b != a { self } else { self.inc_pc() },
+            IFG => if b > a { self } else { self.inc_pc() },
+            IFL => if b < a { self } else { self.inc_pc() },
             _ => fail!("op not implemented")
         };
 
