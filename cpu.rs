@@ -180,6 +180,8 @@ impl CpuState {
             AND => self.set_value(instr, old & val),
             BOR => self.set_value(instr, old | val),
             XOR => self.set_value(instr, old ^ val),
+            SHR => self.set_value(instr, old >> val as uint), // FIXME: set EX
+            ASR => self.set_value(instr, old << val as uint), // FIXME: set EX
             _ => fail!("op not implemented")
         };
 
